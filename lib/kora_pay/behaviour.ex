@@ -159,13 +159,13 @@ defmodule KoraPay.Behaviour do
   @type error :: {:error, %{reason: String.t(), details: %{}}}
 
   @callback create_charge(
-              amount: non_neg_integer(),
-              currency: String.t(),
-              reference: String.t(),
-              notification_url: String.t(),
-              narration: String.t(),
-              customer: customer(),
-              options: charge_options()
+              amount :: non_neg_integer(),
+              currency :: String.t(),
+              reference :: String.t(),
+              notification_url :: String.t(),
+              narration :: String.t(),
+              customer :: customer(),
+              options :: charge_options()
             ) :: charge_response() | error()
 
   @callback charge_status(reference :: String.t()) :: charge_status() | error()
@@ -174,7 +174,7 @@ defmodule KoraPay.Behaviour do
               txn_reference :: String.t(),
               authorization :: %{},
               options :: auth_options()
-            ) :: nil
+            ) :: charge_response() | error()
 
   @callback charge_card(charge_data :: String.t()) :: charge_response() | error()
 
@@ -185,12 +185,12 @@ defmodule KoraPay.Behaviour do
 
   @callback transactions() :: [transaction()] | error()
 
-  @callback resolve_bank_account(bank_code: String.t(), account_number: String.t()) ::
+  @callback resolve_bank_account(bank_code :: String.t(), account_number :: String.t()) ::
               bank_account() | error()
 
   @callback list_banks() :: [misc_bank_account()] | error()
 
-  @callback balances() :: balance()
+  @callback balances() :: balance() | error()
 
   @callback create_virtual_bank_account(
               name :: String.t(),
