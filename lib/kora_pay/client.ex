@@ -29,14 +29,14 @@ defmodule KoraPay.Client do
     do: Tesla.post("/misc/banks/resolve", body: opts) |> parse_response()
 
   def list_banks, do: Tesla.get("misc/banks") |> parse_response()
+
   def get_balances, do: Tesla.get("balances") |> parse_response()
 
   def create_virtual_bank_account(opts),
-    do: Tesla.post("virtual-bank-account", opts) |> parse_response()
+    do: Tesla.post("virtual-bank-account", body: opts) |> parse_response()
 
   def virtual_bank_account_details(ref),
     do: Tesla.get("virtual-bank-account/#{ref}") |> parse_response()
-end
 
 defp parse_response(request) do
   case request do
@@ -46,6 +46,7 @@ defp parse_response(request) do
   end
 end
 
-def parse_error(response) do
-  nil
+  defp parse_error(_response) do
+    nil
+  end
 end

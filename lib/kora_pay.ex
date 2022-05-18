@@ -1,19 +1,27 @@
 defmodule KoraPay do
   @moduledoc """
-  todo: Documentation for `KoraPay`.
+  KoraPay REST HTTP client library.
   """
   @behaviour KoraPay.Behaviour
+
   alias KoraPay.Behaviour, as: T
+  alias KoraPay.Client
 
   @doc """
-  Create a charge.
+  Create/intialize a charge. The first of several steps
+  required to charge a card. After creation, call KoraPay.authorize(...)
 
   ## Examples
+  ```
     iex> KoraPay.create_charge()
-
+  ```
   ## Options
-  """
 
+    A map of one or more attributes.
+      - `redirect_url`:  URL to redirect your customer when the transaction is complete.
+      - `default_channel`: channel that shows up when client modal is instantiated. E.g `"bank_transfer"`
+      - `channels`: Allowed payment channels for this transaction. E.g `["card", "bank_transfer"]`
+  """
   @spec create_charge(
           non_neg_integer(),
           String.t(),
@@ -30,18 +38,23 @@ defmodule KoraPay do
         _notification_url,
         _narration,
         _customer,
-        _options
+        options \\ %{}
       ) do
-    {:error, %{reason: "not implemented", details: %{}}}
+    body_params = []
+
+    case Client.charge_card(body_params) do
+      {:ok, initiated_charge} -> initiated_charge
+      _ -> {:error, %{reason: "not handled", details: %{}}}
+    end
   end
 
   @doc """
-  todo:
+  Find the status and details of a charge by providing the reference used/returned
+  in the charge creation step.
 
   ## Examples
 
-      iex> KoraPay.charge_status()
-      :world
+      iex> KoraPay.charge_status("kpy-ex-ref-1")
   """
   @spec charge_status(reference :: String.t()) :: T.charge_status() | T.error()
   def charge_status(_reference) do
@@ -59,12 +72,12 @@ defmodule KoraPay do
   ## Options
     - `:pin` :
     - `:otp` :
-     `:avs` :
-     `:state`:
-     `:city`:
-     `:country`:
-     `:address`:
-     `:zip_codes`:
+    - `:avs` :
+    - `:state`:
+    - `:city`:
+    - `:country`:
+    - `:address`:
+    - `:zip_codes`:
   """
   @spec authorize_charge(String.t(), %{}, T.auth_options()) :: T.charge_response() | T.error()
   def authorize_charge(_txn_reference, _authorization, _options \\ %{}) do
