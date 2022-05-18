@@ -1,7 +1,55 @@
 defmodule KoraPay.Behaviour do
-  ### Card Types ###
+  ### Entities ###
+  @type card :: %{
+          card_type: :mastercard | :visa | :verve,
+          first_six: String.t(),
+          last_four: String.t(),
+          expiry: String.t()
+        }
+
+  @type transaction :: %{
+          type: transaction_type(),
+          amount: float(),
+          fee: float(),
+          narration: String.t(),
+          currency: String.t(),
+          created_at: DateTime.t(),
+          status: status(),
+          transaction_status: String.t(),
+          reference: String.t(),
+          callback_url: String.t(),
+          meta: %{},
+          customer: customer()
+        }
+
+  @type customer :: %{
+          required(:email) => String.t(),
+          optional(:name) => String.t(),
+          optional(:phone) => String.t()
+        }
+
+  @type destination :: %{
+          type: String.t(),
+          amount: float(),
+          currency: String.t(),
+          narration: String.t(),
+          bank_account: short_bank_account(),
+          customer: customer()
+        }
+
+  @type disbursement :: %{
+          amount: non_neg_integer(),
+          fee: float(),
+          currency: String.t(),
+          status: status(),
+          reference: String.t(),
+          narration: String.t(),
+          customer: customer()
+        }
+
   @type charge_reference :: %{reference: String.t(), checkout_url: String.t()}
 
+  # Auth types
   @type auth_model :: :OTP | :THREE_DS | :AVS | :PIN
 
   @type auth_options :: %{
@@ -15,6 +63,7 @@ defmodule KoraPay.Behaviour do
           optional(:zip_codes) => String.t()
         }
 
+  # Transaction types
   @type balance :: %{
           NGN: %{
             pending_balance: float(),
@@ -23,20 +72,17 @@ defmodule KoraPay.Behaviour do
         }
 
   @type status :: :success | :pending | :processing | :expired | :failed
+
   @type transaction_type :: :collection | :disubursement
+
   @type channel :: :card | :bank_transfer
 
-  @type card :: %{
-          card_type: :mastercard | :visa | :verve,
-          first_six: String.t(),
-          last_four: String.t(),
-          expiry: String.t()
-        }
-
-  @type customer :: %{
-          required(:email) => String.t(),
-          optional(:name) => String.t(),
-          optional(:phone) => String.t()
+  ### Bank Account Types ###
+  @type bank_account :: %{
+          bank_name: String.t(),
+          bank_code: String.t(),
+          account_number: String.t(),
+          account_name: String.t()
         }
 
   @type virtual_account :: %{
@@ -47,13 +93,6 @@ defmodule KoraPay.Behaviour do
           currency: String.t(),
           bank_account: bank_account(),
           customer: customer()
-        }
-
-  @type bank_account :: %{
-          bank_name: String.t(),
-          bank_code: String.t(),
-          account_number: String.t(),
-          account_name: String.t()
         }
 
   @type payer_bank_account :: %{
@@ -74,37 +113,7 @@ defmodule KoraPay.Behaviour do
           country: String.t()
         }
 
-  @type destination :: %{
-          # bank_account
-          type: String.t(),
-          amount: float(),
-          currency: String.t(),
-          narration: String.t(),
-          bank_account: short_bank_account(),
-          customer: customer()
-        }
-
-  @type transaction :: %{
-          type: transaction_type(),
-          amount: float(),
-          fee: float(),
-          narration: String.t(),
-          currency: String.t(),
-          created_at: DateTime.t(),
-          status: status(),
-          transaction_status: String.t(),
-          reference: String.t(),
-          callback_url: String.t(),
-          meta: %{},
-          customer: customer()
-        }
-
-  @type charge_options :: %{
-          redirect_url: String.t(),
-          channels: [channel()],
-          default_channel: channel()
-        }
-
+  ### API Types ###
   @type charge_response :: %{
           amount: non_neg_integer(),
           amount_charged: non_neg_integer(),
@@ -118,16 +127,6 @@ defmodule KoraPay.Behaviour do
           transaction_reference: String.t(),
           authorization: %{},
           card: card()
-        }
-
-  @type disbursement :: %{
-          amount: non_neg_integer(),
-          fee: float(),
-          currency: String.t(),
-          status: status(),
-          reference: String.t(),
-          narration: String.t(),
-          customer: customer()
         }
 
   @type disbursement_status :: %{
@@ -148,6 +147,13 @@ defmodule KoraPay.Behaviour do
           created_at: DateTime.t(),
           payer_bank_account: payer_bank_account(),
           card: card()
+        }
+
+  ### Helper Types
+  @type charge_options :: %{
+          redirect_url: String.t(),
+          channels: [channel()],
+          default_channel: channel()
         }
 
   @type error :: {:error, %{reason: String.t(), details: %{}}}
