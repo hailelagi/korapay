@@ -1,6 +1,6 @@
 # KoraPay
 
-Korapay client.
+Korapay client (https://docs.korapay.com/).
 
 ## Installation
 
