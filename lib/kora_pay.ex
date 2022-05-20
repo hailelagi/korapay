@@ -5,7 +5,6 @@ defmodule KoraPay do
   @behaviour KoraPay.Behaviour
 
   alias KoraPay.Behaviour, as: T
-  alias KoraPay.Client
 
   @doc """
   Create/intialize a charge. The first of several steps
@@ -22,6 +21,7 @@ defmodule KoraPay do
       - `default_channel`: channel that shows up when client modal is instantiated. E.g `"bank_transfer"`
       - `channels`: Allowed payment channels for this transaction. E.g `["card", "bank_transfer"]`
   """
+  @impl T
   @spec create_charge(
           non_neg_integer(),
           String.t(),
@@ -42,7 +42,7 @@ defmodule KoraPay do
       ) do
     body_params = []
 
-    case Client.charge_card(body_params) do
+    case impl().charge_card(body_params) do
       {:ok, initiated_charge} -> initiated_charge
       _ -> {:error, %{reason: "not handled", details: %{}}}
     end
@@ -154,8 +154,14 @@ defmodule KoraPay do
 
       iex> KoraPay.list_banks()
   """
+  @impl T
   @spec list_banks() :: [T.misc_bank_account()] | T.error()
   def list_banks do
+    case impl().list_banks() do
+      {:ok, banks} ->{:ok, banks}
+      _ -> {:error, %{reason: "not handled", details: %{}}}
+    end
+
     {:error, %{reason: "not implemented", details: %{}}}
   end
 
@@ -204,4 +210,6 @@ defmodule KoraPay do
   def virtual_bank_account_details(_account_reference) do
     {:error, %{reason: "not implemented", details: %{}}}
   end
+
+  defp impl, do: Application.get_env(:kora_pay, :api, KoraPay)
 end
