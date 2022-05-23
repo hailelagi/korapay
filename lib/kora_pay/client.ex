@@ -1,5 +1,7 @@
 defmodule KoraPay.Client do
-  @moduledoc false
+  @moduledoc """
+    todo: document api auth types
+  """
 
   use Tesla
 
@@ -17,25 +19,53 @@ defmodule KoraPay.Client do
     Tesla.client(middleware)
   end
 
-  def initialize_charge(opts),
-    do: Tesla.post("charges/initialize", body: opts) |> parse_response()
+  def initialize_charge(opts) do
+    build_client(:private)
+    |> Tesla.post("/charges/initialize", body: opts)
+    |> parse_response()
+  end
 
-  def query_charge(ref), do: Tesla.get("charges/#{ref}") |> parse_response()
+  def query_charge(ref) do
+    build_client(:private)
+    |> Tesla.get("/charges/#{ref}")
+    |> parse_response()
+  end
 
-  def charge_card(opts), do: Tesla.post("charges/card", body: opts) |> parse_response()
+  def charge_card(opts) do
+    build_client(:private)
+    |> Tesla.post("/charges/card", body: opts)
+    |> parse_response()
+  end
 
-  def authorize_charge(opts),
-    do: Tesla.post("charges/card/authorize", body: opts) |> parse_response()
+  def authorize_charge(opts) do
+    build_client(:private)
+    |> Tesla.post("/charges/card/authorize", body: opts)
+    |> parse_response()
+  end
 
-  def disburse_to_account(opts),
-    do: Tesla.post("transactions/disburse", body: opts) |> parse_response()
+  def disburse_to_account(opts) do
+    build_client(:private)
+    |> Tesla.post("transactions/disburse", body: opts)
+    |> parse_response()
+  end
 
-  def verify_disbursed_txn(txn_ref), do: Tesla.get("transactions/#{txn_ref}") |> parse_response()
+  def verify_disbursed_txn(txn_ref) do
+    build_client(:private)
+    |> Tesla.get("transactions/#{txn_ref}")
+    |> parse_response()
+  end
 
-  def all_transactions, do: Tesla.get("transactions") |> parse_response()
+  def all_transactions do
+    build_client(:private)
+    |> Tesla.get("transactions")
+    |> parse_response()
+  end
 
-  def resolve_bank_account(opts),
-    do: Tesla.post("/misc/banks/resolve", body: opts) |> parse_response()
+  def resolve_bank_account(opts) do
+    build_client(:private)
+    |> Tesla.post("/misc/banks/resolve", body: opts)
+    |> parse_response()
+  end
 
   def list_banks do
     build_client(:public)
@@ -43,24 +73,41 @@ defmodule KoraPay.Client do
     |> parse_response()
   end
 
-  @spec get_balances :: {:error, any} | {:ok, any}
-  def get_balances, do: Tesla.get("balances") |> parse_response()
+  def get_balances do
+    build_client(:public)
+    |> Tesla.get("balances")
+    |> parse_response()
+  end
 
-  def create_virtual_bank_account(opts),
-    do: Tesla.post("virtual-bank-account", body: opts) |> parse_response()
+  def create_virtual_bank_account(opts) do
+    build_client(:private)
+    |> Tesla.post("virtual-bank-account", body: opts)
+    |> parse_response()
+  end
 
-  def virtual_bank_account_details(ref),
-    do: Tesla.get("virtual-bank-account/#{ref}") |> parse_response()
+  def virtual_bank_account_details(ref) do
+    build_client(:private)
+    |> Tesla.get("virtual-bank-account/#{ref}")
+    |> parse_response()
+  end
 
   defp parse_response(request) do
     case request do
-      #{:ok, %{status: 200, body: %{"status" => true, "message" => "Successful"} = body}} -> {:ok, body["data"]}
+      # {:ok, %{status: 200, body: %{"status" => true, "message" => "Successful"} = body}} -> {:ok, body["data"]}
       # {:ok, %{status: 200, body: body}} -> {:ok, body}
       {:ok, response} -> parse_error(response)
     end
   end
 
   defp parse_error(response) do
-    response
+    case response do
+      # todo: catch generic network errors
+      # {:ok, %{status: 401, body: body}} -> {:error, "reason"}
+      # {:ok, %{status: 404, body: body}} ->  {:error, "reason"}
+      # {:ok, %{status: 403, body: body}} ->  {:error, "reason"}
+      # {:ok, %{status: 500, body: body}} -> {:error, "reason"}
+      _ -> {:error, "unexpected error"}
+    end
+    nil
   end
 end
