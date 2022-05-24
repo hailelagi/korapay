@@ -83,7 +83,7 @@ defmodule KoraPay.Client do
   end
 
   def resolve_bank_account(opts) do
-    build_client(:private)
+    build_client(:public)
     |> Tesla.post("/misc/banks/resolve", opts)
     |> parse_response()
   end

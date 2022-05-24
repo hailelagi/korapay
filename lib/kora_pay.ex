@@ -12,6 +12,8 @@ defmodule KoraPay do
     config :kora_pay,
       public: "test_yourkey",
       private: "test_yourkey",
+
+      # todo: decide if should load from config
       redirect_url: "test_url",
       webhook_url: "test_url",
   ```
@@ -30,7 +32,6 @@ defmodule KoraPay do
   """
   @behaviour KoraPay.Behaviour
 
-  import KoraPay.Behaviour
   alias KoraPay.Behaviour, as: T
 
   @doc """
@@ -45,10 +46,10 @@ defmodule KoraPay do
   ```
   iex(1)> KoraPay.create_charge(1000, "NGN", "https://webhook.site/8d321d8d-397f-4bab-bf4d-7e9ae3afbd50",
       "Fix Test Webhook", %{"name": "Jycdmbhw Name", email: "jycdmbhw@sharklasers.com"})
-  iex(2)> {:ok, %{
-   "checkout_url" => "https://test-checkout.korapay.com/test-txn/pay",
-   "reference" => "test-txn"
-   }}
+  {:ok, %{
+    "checkout_url" => "https://test-checkout.korapay.com/test-txn/pay",
+    "reference" => "test-txn"
+    }}
   ```
   ## Charge options
     A map of zero or more attributes.
@@ -84,21 +85,20 @@ defmodule KoraPay do
   end
 
   @doc """
-  Find the status and details of a charge by providing the reference used/returned
-  in the charge creation step.
+  Find the details of a charge by providing a reference.
 
   ## Examples
   ```
   iex(1)> KoraPay.charge_status("test-txn")
-  iex(2)> {:ok, %{
-                  "amount" => "1000.00",
-                  "currency" => "NGN",
-                  "description" => "Fix Test Webhook",
-                  "fee" => nil,
-                  "reference" => "test-txn",
-                   "status" => "processing"
-                }
-            }
+  {:ok, %{
+          "amount" => "1000.00",
+          "currency" => "NGN",
+          "description" => "Fix Test Webhook",
+          "fee" => nil,
+          "reference" => "test-txn",
+          "status" => "processing"
+          }
+    }
   ```
   """
   @impl KoraPay.Behaviour
@@ -109,33 +109,25 @@ defmodule KoraPay do
   Authorize a created charge that is "processing".
 
   ## Examples
-  iex> KoraPay.authorize_charge("test-txn", :OTP, %{otp: "12345"})
-  :world
+  ```
+  iex(1)> KoraPay.authorize_charge("test-txn", :otp, %{otp: "12345"})
+  ```
 
   ## Options
-    1. Required only if auth type is `:PIN`:
-        `:pin` : transaction pin
-
-    2. Required only if auth type is `:OTP`:
-        :otp` : one time password
-
-    3. Required only if auth type is `:AVS`:
-      - `:state`
-      - `:city`
-      - `:country`
-      - `:address`
-      - `:zip_codes`
+    1. Required only if auth type is `:pin` e.g %`{pin: "1234'}`
+    2. Required only if auth type is `:otp` e.g `%{otp: "12345"}`
+    3. Required only if auth type is `:avs` e.g `%{state: "Lagos", city: "Lekki", ...}`
+      - state
+      - city
+      - country
+      - address
+      - zip_codes
   """
   @impl KoraPay.Behaviour
   @spec authorize_charge(String.t(), T.auth_model(), T.auth_options()) ::
           T.charge_response() | T.error()
-  def authorize_charge(txn_reference, auth_model, options \\ %{}) do
-    body_params =
-      case auth_model do
-        :AVS -> %{avs: options}
-        :PIN -> options
-        :OTP -> options
-      end
+  def authorize_charge(txn_reference, auth_model, options) do
+    body_params = if auth_model == :avs, do: %{avs: options}, else: options
 
     body = %{
       transaction_reference: txn_reference,
@@ -201,41 +193,57 @@ defmodule KoraPay do
   end
 
   @doc """
-  todo:
+  Verify a bank account.
 
   ## Examples
-
-      iex> KoraPay.resolve_bank_account()
+  ```
+  iex(1)> KoraPay.resolve_bank_account("058", "0234247896")
+  {:ok, %{
+   "account_name" => "OLAEGBE GBENGA EMMANUEL",
+   "account_number" => "0234247896",
+   "bank_code" => "058",
+   "bank_name" => "GTBank Plc"
+  }}
+  ```
   """
   @impl KoraPay.Behaviour
   @spec resolve_bank_account(String.t(), String.t()) :: T.bank_account() | T.error()
-  def resolve_bank_account(_bank_code, _account_number) do
-    {:error, %{reason: "not implemented", details: %{}}}
+  def resolve_bank_account(bank_code, account_number) do
+    body_params = %{
+      bank: bank_code,
+      account: account_number
+    }
+
+    impl().resolve_bank_account(body_params)
   end
 
   @doc """
   All supported bank accounts.
 
   ## Example
-    iex(1)> KoraPay.list_banks()
-    iex(2)> [%{
-              name: "First Bank of Nigeria",
-              slug: "firstbank",
-              code: "011",
-              nibss_bank_code: "000016",
-              country: "NG"
-            }, ...]
+  ```
+  iex(1)> KoraPay.list_banks()
+  [%{
+    name: "First Bank of Nigeria",
+    slug: "firstbank",
+    code: "011",
+    nibss_bank_code: "000016",
+    country: "NG"
+    }, ...]
+    ```
   """
   @impl KoraPay.Behaviour
   @spec list_banks() :: [T.misc_bank_account()] | T.error()
   def list_banks, do: impl().list_banks()
 
   @doc """
-    Return account balances. (currently naira only)
+  Return account balances. (currently naira only)
 
   ## Examples
-    iex> KoraPay.balances()
-    iex(2)> %{"NGN" => %{"available_balance" => 946, "pending_balance" => 0}}
+  ```
+  iex(1)> KoraPay.balances()
+  %{"NGN" => %{"available_balance" => 946, "pending_balance" => 0}}
+  ```
   """
   @impl KoraPay.Behaviour
   @spec balances :: T.balance() | T.error()
