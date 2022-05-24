@@ -1,4 +1,8 @@
 defmodule KoraPay.Behaviour do
+  @moduledoc """
+    Type and function signature reference.
+  """
+
   ### Entities ###
   @type card :: %{
           card_type: :mastercard | :visa | :verve,
@@ -107,10 +111,11 @@ defmodule KoraPay.Behaviour do
         }
 
   @type misc_bank_account :: %{
-          name: String.t(),
-          slug: String.t(),
           code: String.t(),
-          country: String.t()
+          country: String.t(),
+          name: String.t(),
+          nibss_bank_code: String.t(),
+          slug: String.t()
         }
 
   ### API Types ###
@@ -150,18 +155,17 @@ defmodule KoraPay.Behaviour do
         }
 
   ### Helper Types
-  @type charge_options :: %{
+  @type charge_options :: [
           redirect_url: String.t(),
           channels: [channel()],
           default_channel: channel()
-        }
+        ]
 
   @type error :: {:error, %{reason: String.t(), details: %{}}}
 
   @callback create_charge(
               amount :: non_neg_integer(),
               currency :: String.t(),
-              reference :: String.t(),
               notification_url :: String.t(),
               narration :: String.t(),
               customer :: customer(),

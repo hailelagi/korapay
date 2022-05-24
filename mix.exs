@@ -23,6 +23,7 @@ defmodule KoraPay.MixProject do
     [
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"},
+      {:plug_cowboy, "~> 2.0"},
       {:jason, ">= 1.0.0"},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},

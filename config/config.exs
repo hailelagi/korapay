@@ -7,6 +7,6 @@ config :kora_pay,
   private: System.get_env("PRIVATE_KEY", nil),
   redirect_url: System.get_env("REDIRECT_URL", nil),
   webhook_url: System.get_env("WEBHOOK_URL", nil),
-  api: KoraPay
+  api: KoraPay.Client
 
 import_config "#{config_env()}.exs"
