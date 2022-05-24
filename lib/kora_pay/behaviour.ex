@@ -176,7 +176,7 @@ defmodule KoraPay.Behaviour do
 
   @callback authorize_charge(
               txn_reference :: String.t(),
-              authorization :: %{},
+              auth_model :: auth_model(),
               options :: auth_options()
             ) :: charge_response() | error()
 

@@ -106,27 +106,43 @@ defmodule KoraPay do
   def charge_status(reference), do: impl().query_charge(reference)
 
   @doc """
-  todo:
+  Authorize a created charge that is "processing".
 
   ## Examples
-
-      iex> KoraPay.authorize_charge()
-      :world
+  iex> KoraPay.authorize_charge("test-txn", :OTP, %{otp: "12345"})
+  :world
 
   ## Options
-    - `:pin` :
-    - `:otp` :
-    - `:avs` :
-    - `:state`:
-    - `:city`:
-    - `:country`:
-    - `:address`:
-    - `:zip_codes`:
+    1. Required only if auth type is `:PIN`:
+        `:pin` : transaction pin
+
+    2. Required only if auth type is `:OTP`:
+        :otp` : one time password
+
+    3. Required only if auth type is `:AVS`:
+      - `:state`
+      - `:city`
+      - `:country`
+      - `:address`
+      - `:zip_codes`
   """
   @impl KoraPay.Behaviour
-  @spec authorize_charge(String.t(), %{}, T.auth_options()) :: T.charge_response() | T.error()
-  def authorize_charge(_txn_reference, _authorization, _options \\ %{}) do
-    {:error, %{reason: "not implemented", details: %{}}}
+  @spec authorize_charge(String.t(), T.auth_model(), T.auth_options()) ::
+          T.charge_response() | T.error()
+  def authorize_charge(txn_reference, auth_model, options \\ %{}) do
+    body_params =
+      case auth_model do
+        :AVS -> %{avs: options}
+        :PIN -> options
+        :OTP -> options
+      end
+
+    body = %{
+      transaction_reference: txn_reference,
+      authorization: body_params
+    }
+
+    impl().authorize_charge(body)
   end
 
   @doc """

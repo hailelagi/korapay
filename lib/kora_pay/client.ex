@@ -53,19 +53,20 @@ defmodule KoraPay.Client do
 
   def charge_card(opts) do
     build_client(:private)
-    |> Tesla.post("/charges/card", body: opts)
+    |> Tesla.post("/charges/card", opts)
     |> parse_response()
   end
 
+  @spec authorize_charge(any) :: {:error, %{details: any, reason: any}} | {:ok, any}
   def authorize_charge(opts) do
     build_client(:private)
-    |> Tesla.post("/charges/card/authorize", body: opts)
+    |> Tesla.post("/charges/card/authorize", opts)
     |> parse_response()
   end
 
   def disburse_to_account(opts) do
     build_client(:private)
-    |> Tesla.post("/transactions/disburse", body: opts)
+    |> Tesla.post("/transactions/disburse", opts)
     |> parse_response()
   end
 
@@ -83,7 +84,7 @@ defmodule KoraPay.Client do
 
   def resolve_bank_account(opts) do
     build_client(:private)
-    |> Tesla.post("/misc/banks/resolve", body: opts)
+    |> Tesla.post("/misc/banks/resolve", opts)
     |> parse_response()
   end
 
@@ -101,7 +102,7 @@ defmodule KoraPay.Client do
 
   def create_virtual_bank_account(opts) do
     build_client(:private)
-    |> Tesla.post("/virtual-bank-account", body: opts)
+    |> Tesla.post("/virtual-bank-account", opts)
     |> parse_response()
   end
 
@@ -112,10 +113,10 @@ defmodule KoraPay.Client do
   end
 
   defp parse_response(request) do
-    # IO.inspect(request)
     case request do
       {:ok, %{status: 200, body: %{"status" => true} = body}} -> {:ok, body["data"]}
-      response -> parse_error(response)
+      response ->
+        parse_error(response)
     end
   end
 
