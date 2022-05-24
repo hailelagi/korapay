@@ -33,8 +33,6 @@ defmodule KoraPay.Client do
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://api.korapay.com/#{@namespace}/#{@version}"},
       {Tesla.Middleware.BearerAuth, token: Application.get_env(:kora_pay, auth_type)},
-      {Tesla.Middleware.FormUrlencoded,
-       encode: &Plug.Conn.Query.encode/1, decode: &Plug.Conn.Query.decode/1},
       Tesla.Middleware.JSON
     ]
 
@@ -42,9 +40,9 @@ defmodule KoraPay.Client do
   end
 
   def initialize_charge(opts) do
-    build_client(:private)
-    |> Tesla.post("/charges/initialize", body: opts)
-    |> parse_response()
+      build_client(:private)
+      |> Tesla.post("/charges/initialize", opts)
+      |> parse_response()
   end
 
   def query_charge(ref) do
@@ -114,6 +112,7 @@ defmodule KoraPay.Client do
   end
 
   defp parse_response(request) do
+    # IO.inspect(request)
     case request do
       {:ok, %{status: 200, body: %{"status" => true} = body}} -> {:ok, body["data"]}
       response -> parse_error(response)
@@ -122,13 +121,26 @@ defmodule KoraPay.Client do
 
   defp parse_error(response) do
     case response do
-    {:ok, %{status: 400, body: body}} -> {:error, %{reason: body["error"], details: body["message"]}}
-    {:ok, %{status: 401, body: body}} -> {:error, %{reason: body["error"], details: body["message"]}}
-    {:ok, %{status: 404, body: body}} ->  {:error, %{reason: body["error"], details: body["message"]}}
-    {:ok, %{status: 403, body: body}} ->  {:error, %{reason: body["error"], details: body["message"]}}
-    {:ok, %{status: 500, body: body}} -> {:error, %{reason: "Internal server error", details: body["message"]}}
-    {:ok, %{status: status, body: body}} -> {:error, %{reason: "unexpected error - #{status}", details: body["message"]}}
-    _ -> {:error, %{reason: "unexpected error", details: "unknown"}}
+      {:ok, %{status: 400, body: body}} ->
+        {:error, %{reason: body["error"], details: body["message"]}}
+
+      {:ok, %{status: 401, body: body}} ->
+        {:error, %{reason: body["error"], details: body["message"]}}
+
+      {:ok, %{status: 404, body: body}} ->
+        {:error, %{reason: body["error"], details: body["message"]}}
+
+      {:ok, %{status: 403, body: body}} ->
+        {:error, %{reason: body["error"], details: body["message"]}}
+
+      {:ok, %{status: 500, body: body}} ->
+        {:error, %{reason: "Internal server error", details: body["message"]}}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, %{reason: "unexpected error - #{status}", details: body["message"]}}
+
+      _ ->
+        {:error, %{reason: "unexpected error", details: "unknown"}}
     end
   end
 end

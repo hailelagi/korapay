@@ -155,18 +155,18 @@ defmodule KoraPay.Behaviour do
         }
 
   ### Helper Types
-  @type charge_options :: [
-          redirect_url: String.t(),
-          channels: [channel()],
-          default_channel: channel()
-        ]
+  @type charge_options :: %{
+          optional(:redirect_url) => String.t(),
+          optional(:channels) => [channel()],
+          optional(:default_channel) => channel()
+        }
 
   @type error :: {:error, %{reason: String.t(), details: %{}}}
 
   @callback create_charge(
               amount :: non_neg_integer(),
               currency :: String.t(),
-              notification_url :: String.t(),
+              webhook_url :: String.t(),
               narration :: String.t(),
               customer :: customer(),
               options :: charge_options()
