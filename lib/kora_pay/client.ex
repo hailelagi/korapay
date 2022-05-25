@@ -1,8 +1,8 @@
 defmodule KoraPay.Client do
   @moduledoc """
-    Create a client connection to the [korapay api](https://docs.korapay.com/),
+    Create a connection to the [korapay api](https://docs.korapay.com/),
     and query it. Some routes may require different authentication types, ensure
-    the correct keys are supplied in `./config/config.exs` before starting the application.
+    the correct keys are supplied in `./config` before starting the application.
 
     see: https://korahq.atlassian.net/wiki/spaces/AR/pages/733970455/Authentication
 
@@ -16,9 +16,9 @@ defmodule KoraPay.Client do
     Do not consume the client directly, use the [public interface](./KoraPay.html) in your application:
     ```
     defmodule MyApp do
-      def do_stuff do
-        case KoraPay.list_banks() do
-          {:ok, banks} <- IO.inspect(banks)
+      def print_balance do
+        case KoraPay.balances() do
+          {:ok, balance} <- IO.inspect(balance)
           {:error, error} <- IO.inspect(error)
         end
       end

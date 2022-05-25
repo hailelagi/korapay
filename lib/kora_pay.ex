@@ -12,10 +12,8 @@ defmodule KoraPay do
     config :kora_pay,
       public: "test_yourkey",
       private: "test_yourkey",
-
-      # todo: decide if should load from config
-      redirect_url: "test_url",
-      webhook_url: "test_url",
+      redirect_url: "https://www.myserver.com/redirect",
+      webhook_url: "https://www.myserver.com/webhook",
   ```
 
   ## Usage
@@ -30,22 +28,180 @@ defmodule KoraPay do
     end
   ```
   """
-  @behaviour KoraPay.Behaviour
+  alias KoraPay.Behaviour, as: Behaviour
+  @behaviour Behaviour
 
-  alias KoraPay.Behaviour, as: T
+  ### Entities ###
+  @type card :: %{
+          card_type: :mastercard | :visa | :verve,
+          first_six: String.t(),
+          last_four: String.t(),
+          expiry: String.t()
+        }
+
+  @type transaction :: %{
+          type: transaction_type(),
+          amount: float(),
+          fee: float(),
+          narration: String.t(),
+          currency: String.t(),
+          created_at: DateTime.t(),
+          status: status(),
+          transaction_status: String.t(),
+          reference: String.t(),
+          callback_url: String.t(),
+          meta: %{},
+          customer: customer()
+        }
+
+  @type customer :: %{
+          required(:email) => String.t(),
+          optional(:name) => String.t(),
+          optional(:phone) => String.t()
+        }
+
+  @type destination :: %{
+          type: String.t(),
+          amount: float(),
+          currency: String.t(),
+          narration: String.t(),
+          bank_account: short_bank_account(),
+          customer: customer()
+        }
+
+  @type disbursement :: %{
+          amount: non_neg_integer(),
+          fee: float(),
+          currency: String.t(),
+          status: status(),
+          reference: String.t(),
+          narration: String.t(),
+          customer: customer()
+        }
+
+  @type charge_reference :: %{reference: String.t(), checkout_url: String.t()}
+
+  # Auth
+  @type auth_model :: :otp | :three_ds | :avs | :pin
+
+  # Transaction types
+  @type balance :: %{
+          NGN: %{
+            pending_balance: float(),
+            available_balance: float()
+          }
+        }
+
+  @type status :: :success | :pending | :processing | :expired | :failed
+
+  @type transaction_type :: :collection | :disubursement
+
+  @type channel :: :card | :bank_transfer
+
+  ### Bank Account Types ###
+  @type bank_account :: %{
+          bank_name: String.t(),
+          bank_code: String.t(),
+          account_number: String.t(),
+          account_name: String.t()
+        }
+
+  @type virtual_account :: %{
+          account_reference: String.t(),
+          unique_id: String.t(),
+          account_status: String.t(),
+          created_at: DateTime.t(),
+          currency: String.t(),
+          bank_account: bank_account(),
+          customer: customer()
+        }
+
+  @type payer_bank_account :: %{
+          account_number: String.t(),
+          account_name: String.t(),
+          bank_name: String.t()
+        }
+
+  @type short_bank_account :: %{
+          bank: String.t(),
+          account: String.t()
+        }
+
+  @type misc_bank_account :: %{
+          code: String.t(),
+          country: String.t(),
+          name: String.t(),
+          nibss_bank_code: String.t(),
+          slug: String.t()
+        }
+
+  ### API Types ###
+  @type charge_response :: %{
+          amount: non_neg_integer(),
+          amount_charged: non_neg_integer(),
+          auth_model: auth_model(),
+          currency: String.t(),
+          fee: float(),
+          vat: float(),
+          response_message: String.t(),
+          payment_reference: String.t(),
+          status: status(),
+          transaction_reference: String.t(),
+          authorization: %{},
+          card: card()
+        }
+
+  @type disbursement_status :: %{
+          type: transaction_type(),
+          transaction_status: String.t(),
+          transaction_date: DateTime.t(),
+          channel: channel(),
+          disbursement: disbursement()
+        }
+
+  @type charge_status :: %{
+          reference: String.t(),
+          amount: non_neg_integer(),
+          fee: float(),
+          currency: String.t(),
+          status: status(),
+          description: String.t(),
+          created_at: DateTime.t(),
+          payer_bank_account: payer_bank_account(),
+          card: card()
+        }
+
+  ### Helper Types
+  @type charge_options :: %{
+          optional(:redirect_url) => String.t(),
+          optional(:channels) => [channel()],
+          optional(:default_channel) => channel()
+        }
+
+  @type auth_options ::
+          String.t()
+          | %{
+              state: String.t(),
+              city: String.t(),
+              country: String.t(),
+              address: String.t(),
+              zip_codes: String.t()
+            }
+
+  @type error :: {:error, %{reason: String.t(), details: %{}}}
 
   @doc """
     Create/intialize a charge. The first of several steps
     required to charge a card. After creation, call `KoraPay.authorize_charge(...)`
     to authorise.
 
-    NOTE: References are automatically generated as a random string. Save the response.
+    NOTE: References are automatically generated as a random string, persist it.
     see: https://docs.korapay.com/#f192d2e8-aab2-4f5a-98ef-fa0ed7e2d853
 
   ## Examples
   ```
   iex(1)> KoraPay.create_charge(1000, "NGN", "https://webhook.site/8d321d8d-397f-4bab-bf4d-7e9ae3afbd50",
-      "Fix Test Webhook", %{"name": "Jycdmbhw Name", email: "jycdmbhw@sharklasers.com"})
+  ...>    "Fix Test Webhook", %{name: "Jycdmbhw Name", email: "jycdmbhw@sharklasers.com"})
   {:ok, %{
     "checkout_url" => "https://test-checkout.korapay.com/test-txn/pay",
     "reference" => "test-txn"
@@ -57,24 +213,22 @@ defmodule KoraPay do
     - `:default_channel`: channel that shows up when client modal is instantiated. E.g `"bank_transfer"`
     - `:channels`: Allowed payment channels for this transaction e.g `["card", "bank_transfer"]`
   """
-  @impl KoraPay.Behaviour
+  @impl Behaviour
   @spec create_charge(
           non_neg_integer(),
           String.t(),
           String.t(),
-          String.t(),
-          T.customer(),
-          T.charge_options()
-        ) ::
-          T.charge_response() | T.error()
-  def create_charge(amount, currency, webhook_url, narration, customer, charge_options \\ %{}) do
+          customer(),
+          charge_options()
+        ) :: charge_response() | error()
+  def create_charge(amount, currency, narration, customer, charge_options \\ %{}) do
     body_params =
       Map.merge(
         %{
           amount: to_string(amount),
           currency: currency,
           reference: generate_reference(),
-          notification_url: webhook_url,
+          notification_url: Application.get_env(:kora_pay, :webhook_url),
           narration: narration,
           customer: customer
         },
@@ -101,8 +255,8 @@ defmodule KoraPay do
     }
   ```
   """
-  @impl KoraPay.Behaviour
-  @spec charge_status(String.t()) :: T.charge_status() | T.error()
+  @impl Behaviour
+  @spec charge_status(String.t()) :: charge_status() | error()
   def charge_status(reference), do: impl().query_charge(reference)
 
   @doc """
@@ -110,7 +264,7 @@ defmodule KoraPay do
 
   ## Examples
   ```
-  iex(1)> KoraPay.authorize_charge("test-txn", :otp, %{otp: "12345"})
+  iex(1)> KoraPay.authorize_charge("test-txn", :otp, "12345")
   ```
 
   ## Options
@@ -123,15 +277,20 @@ defmodule KoraPay do
       - address
       - zip_codes
   """
-  @impl KoraPay.Behaviour
-  @spec authorize_charge(String.t(), T.auth_model(), T.auth_options()) ::
-          T.charge_response() | T.error()
+  @impl Behaviour
+  @spec authorize_charge(String.t(), auth_model(), auth_options()) ::
+          charge_response() | error()
   def authorize_charge(txn_reference, auth_model, options) do
-    body_params = if auth_model == :avs, do: %{avs: options}, else: options
+    auth =
+      case auth_model do
+        :avs -> %{avs: options}
+        :otp -> %{otp: options}
+        :pin -> %{pin: options}
+      end
 
     body = %{
       transaction_reference: txn_reference,
-      authorization: body_params
+      authorization: auth
     }
 
     impl().authorize_charge(body)
@@ -145,8 +304,8 @@ defmodule KoraPay do
       iex> KoraPay.charge_card()
       :world
   """
-  @impl KoraPay.Behaviour
-  @spec charge_card(String.t()) :: T.charge_response() | T.error()
+  @impl Behaviour
+  @spec charge_card(String.t()) :: charge_response() | error()
   def charge_card(_charge_data) do
     {:error, %{reason: "not implemented", details: %{}}}
   end
@@ -159,8 +318,8 @@ defmodule KoraPay do
       iex> KoraPay.disburse()
       :world
   """
-  @impl KoraPay.Behaviour
-  @spec disburse(String.t(), T.destination()) :: T.disbursement() | T.error()
+  @impl Behaviour
+  @spec disburse(String.t(), destination()) :: disbursement() | error()
   def disburse(_reference, _destination) do
     {:error, %{reason: "not implemented", details: %{}}}
   end
@@ -173,24 +332,24 @@ defmodule KoraPay do
       iex> KoraPay.verify_disbursement()
       :world
   """
-  @impl KoraPay.Behaviour
-  @spec verify_disbursement(String.t()) :: T.disbursement_status() | T.error()
+  @impl Behaviour
+  @spec verify_disbursement(String.t()) :: disbursement_status() | error()
   def verify_disbursement(_reference) do
     {:error, %{reason: "not implemented", details: %{}}}
   end
 
   @doc """
-  todo:
+  All transactions for a client.
 
   ## Examples
-
-      iex> KoraPay.transactions()
+  ```
+  iex(1)> KoraPay.transactions()
+  nil
+  ```
   """
-  @impl KoraPay.Behaviour
-  @spec transactions() :: [T.transaction()] | T.error()
-  def transactions do
-    {:error, %{reason: "not implemented", details: %{}}}
-  end
+  @impl Behaviour
+  @spec transactions() :: [transaction()] | error()
+  def transactions, do: impl().all_transactions()
 
   @doc """
   Verify a bank account.
@@ -206,8 +365,8 @@ defmodule KoraPay do
   }}
   ```
   """
-  @impl KoraPay.Behaviour
-  @spec resolve_bank_account(String.t(), String.t()) :: T.bank_account() | T.error()
+  @impl Behaviour
+  @spec resolve_bank_account(String.t(), String.t()) :: bank_account() | error()
   def resolve_bank_account(bank_code, account_number) do
     body_params = %{
       bank: bank_code,
@@ -223,17 +382,17 @@ defmodule KoraPay do
   ## Example
   ```
   iex(1)> KoraPay.list_banks()
-  [%{
+  {:ok, [%{
     name: "First Bank of Nigeria",
     slug: "firstbank",
     code: "011",
     nibss_bank_code: "000016",
     country: "NG"
-    }, ...]
+    }, ...]}
     ```
   """
-  @impl KoraPay.Behaviour
-  @spec list_banks() :: [T.misc_bank_account()] | T.error()
+  @impl Behaviour
+  @spec list_banks() :: [misc_bank_account()] | error()
   def list_banks, do: impl().list_banks()
 
   @doc """
@@ -242,46 +401,38 @@ defmodule KoraPay do
   ## Examples
   ```
   iex(1)> KoraPay.balances()
-  %{"NGN" => %{"available_balance" => 946, "pending_balance" => 0}}
+  {:ok, %{"NGN" => %{"available_balance" => 946, "pending_balance" => 0}}}
   ```
   """
-  @impl KoraPay.Behaviour
-  @spec balances :: T.balance() | T.error()
+  @impl Behaviour
+  @spec balances :: balance() | error()
   def balances, do: impl().get_balances()
 
   @doc """
-  todo:
+  Create a virutal bank account.
 
   ## Examples
-
-      iex> KoraPay.charge_status()
+  ```
+  iex(1)> KoraPay.create_virtual_bank_account()
+  ```
   """
-  @impl KoraPay.Behaviour
+  @impl Behaviour
   @spec create_virtual_bank_account(
           String.t(),
           String.t(),
           boolean(),
           [String.t()],
           String.t(),
-          T.customer()
+          customer()
         ) ::
-          T.virtual_account() | T.error()
+          virtual_account() | error()
   def create_virtual_bank_account(_name, _reference, _permanent, _bvn, _bank_code, _customer) do
     {:error, %{reason: "not implemented", details: %{}}}
   end
 
-  @doc """
-  todo:
-
-  ## Examples
-
-      iex> KoraPay.virtual_bank_account_details()
-  """
-  @impl KoraPay.Behaviour
-  @spec virtual_bank_account_details(String.t()) :: T.virtual_account() | T.error()
-  def virtual_bank_account_details(_account_reference) do
-    {:error, %{reason: "not implemented", details: %{}}}
-  end
+  @impl Behaviour
+  @spec virtual_bank_account_details(String.t()) :: virtual_account() | error()
+  def virtual_bank_account_details(ref), do: impl().virtual_bank_account_details(ref)
 
   defp generate_reference do
     # TODO: Generate UUIDs/ refs to be stored and track txns
