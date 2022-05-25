@@ -21,11 +21,11 @@ defmodule KoraPay.Behaviour do
   @callback charge_card(charge_data :: String.t()) :: KoraPay.charge_response() | KoraPay.error()
 
   @callback disburse(
-              non_neg_integer(),
-              String.t(),
-              KoraPay.bank_account(),
-              KoraPay.customer(),
-              String.t()
+              amount :: non_neg_integer(),
+              currency :: String.t(),
+              bank_account :: KoraPay.bank_account(),
+              customer :: KoraPay.customer(),
+              reference :: String.t()
             ) ::
               KoraPay.disbursement() | KoraPay.error()
 
