@@ -19,7 +19,13 @@ defmodule KoraPay.Behaviour do
 
   @callback charge_card(charge_data :: String.t()) :: KoraPay.charge_response() | KoraPay.error()
 
-  @callback disburse(reference :: String.t(), destination :: KoraPay.destination()) ::
+  @callback disburse(
+              non_neg_integer(),
+              String.t(),
+              KoraPay.bank_account(),
+              KoraPay.customer(),
+              String.t()
+            ) ::
               KoraPay.disbursement() | KoraPay.error()
 
   @callback verify_disbursement(reference :: String.t()) ::
@@ -36,11 +42,11 @@ defmodule KoraPay.Behaviour do
 
   @callback create_virtual_bank_account(
               name :: String.t(),
-              reference :: String.t(),
               permanent :: boolean(),
               bvn :: [String.t()],
               bank_code :: String.t(),
-              customer :: KoraPay.customer()
+              customer :: KoraPay.customer(),
+              reference :: String.t()
             ) :: KoraPay.virtual_account() | KoraPay.error()
 
   @callback virtual_bank_account_details(account_reference :: String.t()) ::

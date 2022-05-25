@@ -303,59 +303,103 @@ defmodule KoraPay do
 
   iex(1)> KoraPay.charge_card(enc_data)
   {:ok, %{
-    "amount" => 200,
-    "amount_charged" => 200,
-    "auth_model" => "OTP",
-    "currency" => "NGN",
-    "fee": 2.6,
-    "vat": 0.2,
-    "response_message" => "Please enter the OTP sent to your mobile number 080****** and email te**@rave**.com",
-    "payment_reference"=> "1To64uTVkRcRA",
-    "status" => "processing",
-    "transaction_reference"=> "KPY-CA-b5Mit73shYeQ",
-    "card" => {
-      "card_type": "mastercard",
-      "first_six": "539983",
-      "last_four": "8381",
-      "expiry": "10/31"
+      "amount" => 200,
+      "amount_charged" => 200,
+      "auth_model" => "OTP",
+      "currency" => "NGN",
+      "fee": 2.6,
+      "vat": 0.2,
+      "response_message" => "Please enter the OTP sent to your mobile number 080****** and email te**@rave**.com",
+      "payment_reference"=> "1To64uTVkRcRA",
+      "status" => "processing",
+      "transaction_reference"=> "KPY-CA-b5Mit73shYeQ",
+      "card" => {
+        "card_type": "mastercard",
+        "first_six": "539983",
+        "last_four": "8381",
+        "expiry": "10/31"
+      }
     }
   }
-  }}
   ```
   """
   @impl Behaviour
   @spec charge_card(String.t()) :: charge_response() | error()
-  def charge_card(_charge_data) do
-    {:error, %{reason: "not implemented", details: %{}}}
-  end
+  def charge_card(charge_data), do: impl().charge_card(charge_data)
 
   @doc """
-  todo:
+  Payout to a bank account.
 
   ## Examples
+  ```
+  iex(1)> bank_account = %{"bank" => "033", "account" => "0000000000"}
+  iex(2)> customer = %{"name" => "John Doe", "email" => "johndoe@korapay.com"}
+  iex(3)> KoraPay.disburse(1000, "NGN", bank_account, customer)
+  {:ok, %{
+    "amount" => "100.00",
+    "fee" => "2.50",
+    "currency" => "NGN",
+    "status" => "processing",
+    "reference" => "KPY-D-t74azVrw9oPLtv9",
+    "narration" => "Test Transfer Payment",
+    "customer" => {
+      "name" => "John Doe",
+      "email" => "johndoe@korapay.com"
+      }
+    }
+  }
+  ```
 
-      iex> KoraPay.disburse()
-      :world
+  ## Options
+    - `type` : destination type. defaults to `"bank_account"`
   """
   @impl Behaviour
-  @spec disburse(String.t(), destination()) :: disbursement() | error()
-  def disburse(_reference, _destination) do
-    {:error, %{reason: "not implemented", details: %{}}}
+  @spec disburse(non_neg_integer(), String.t(), bank_account(), customer(), String.t()) ::
+          disbursement() | error()
+  def disburse(amount, currency, bank_account, customer, type \\ "bank_account") do
+    params = %{
+      reference: generate_reference(),
+      destination: %{
+        type: type,
+        amount: to_string(amount),
+        currency: currency,
+        bank_account: bank_account,
+        customer: customer
+      }
+    }
+
+    impl().disburse_to_account(params)
   end
 
   @doc """
-  todo:
+  Check on a payout's status.
 
   ## Examples
+  ```
+  iex(1)> KoraPay.verify_disbursement("KPY_jLo7Zbk")
+  {:ok, %{
+        "amount" => 1000,
+        "fee" => 10,
+        "narration" => "payout to customer",
+        "currency" => "NGN",
+        "created_at" => "2019-08-05T20:29:49.000Z",
+        "status" => "success",
+        "reference" => "KPY_jLo7Zbk",
+        "callback_url" => "https://example.com",
+        "trace_id" => "000000000000000111111111111111",
+        "message" => "Payout successful",
+        "customer" => {
+        "name" => "John Doe",
+        "email" => "johndoe@korapay.com",
+      }
+    }
+  }
 
-      iex> KoraPay.verify_disbursement()
-      :world
+  ```
   """
   @impl Behaviour
   @spec verify_disbursement(String.t()) :: disbursement_status() | error()
-  def verify_disbursement(_reference) do
-    {:error, %{reason: "not implemented", details: %{}}}
-  end
+  def verify_disbursement(reference), do: impl().verify_disbursed_txn(reference)
 
   @doc """
   All transactions for a client.
@@ -455,15 +499,31 @@ defmodule KoraPay do
   @impl Behaviour
   @spec create_virtual_bank_account(
           String.t(),
-          String.t(),
           boolean(),
           [String.t()],
           String.t(),
-          customer()
+          customer(),
+          String.t()
         ) ::
           virtual_account() | error()
-  def create_virtual_bank_account(_name, _reference, _permanent, _bvn, _bank_code, _customer) do
-    {:error, %{reason: "not implemented", details: %{}}}
+  def create_virtual_bank_account(
+        name,
+        permanent,
+        bvn,
+        bank_code,
+        customer,
+        reference \\ generate_reference()
+      ) do
+    params = %{
+      account_name: name,
+      account_reference: reference,
+      permanent: permanent,
+      bvn: bvn,
+      bank_code: bank_code,
+      customer: customer
+    }
+
+    impl().create_virtual_bank_account(params)
   end
 
   @impl Behaviour
