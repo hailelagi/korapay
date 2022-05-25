@@ -2,10 +2,48 @@ defmodule KoraPayTest do
   use ExUnit.Case
   import Mox
 
-  setup :verify_on_exit!
+  setup do
+    verify!(KoraPayMock)
+  end
 
-  describe "Miscellaneous " do
-    test "Get a list of banks" do
+  describe "Mock Pay-ins" do
+    test "can initialize a charge on a card" do
+      expect(KoraPayMock, :create_charge, fn ->
+        {:ok,
+         %{
+           "checkout_url" => "https://test-checkout.korapay.com/test-txn/pay",
+           "reference" => "test-txn"
+         }}
+      end)
+
+      assert {:ok, _} = KoraPay.create_charge(1000, "NGN", "test-xyz", %{email: "jycdmbhw@sharklasers.com"}, "test-txn")
+    end
+  end
+
+  #   test "can query the status of a card chage" do
+  #     true == false
+  #   end
+
+  #   test "can authorize a charge on a card" do
+  #     true == false
+  #   end
+
+  #   test "can charge a card" do
+  #     true == false
+  #   end
+  # end
+
+  describe "Mock Payouts" do
+  end
+
+  describe "Mock Transactions" do
+  end
+
+  describe "Mock Verification" do
+  end
+
+  describe "Mock miscellaneous " do
+    test "GET a list of banks" do
       expect(KoraPayMock, :list_banks, fn ->
         {:ok,
          [
@@ -22,4 +60,10 @@ defmodule KoraPayTest do
       assert {:ok, _} = KoraPay.list_banks()
     end
   end
+
+  # describe "Mock Balances" do
+  # end
+
+  # describe "Mock Virtual Bank Accout" do
+  # end
 end
