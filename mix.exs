@@ -25,6 +25,7 @@ defmodule KoraPay.MixProject do
       {:hackney, "~> 1.17"},
       {:plug_cowboy, "~> 2.0"},
       {:jason, ">= 1.0.0"},
+      { :elixir_uuid, "~> 1.2"},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:mox, "~> 1.0", only: :test},

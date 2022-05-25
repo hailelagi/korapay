@@ -536,10 +536,7 @@ defmodule KoraPay do
   @spec virtual_bank_account_details(String.t()) :: virtual_account() | error()
   def virtual_bank_account_details(ref), do: impl().virtual_bank_account_details(ref)
 
-  defp generate_reference do
-    # TODO: Generate UUIDs/ refs to be stored and track txns
-    "test-txn"
-  end
+  defp generate_reference, do: UUID.uuid4(:slug)
 
   defp impl, do: Application.get_env(:kora_pay, :api, KoraPay.Client)
 end
