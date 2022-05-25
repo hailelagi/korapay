@@ -6,6 +6,7 @@ defmodule KoraPay.Behaviour do
               currency :: String.t(),
               narration :: String.t(),
               customer :: KoraPay.customer(),
+              reference :: String.t(),
               options :: KoraPay.charge_options()
             ) :: KoraPay.charge_response() | KoraPay.error()
 

@@ -204,7 +204,8 @@ defmodule KoraPay do
   }
   ```
   ## Charge options
-    A map of zero or more attributes.
+    1. `reference` : transaction reference, if not provided, will be auto generated.
+    2. `charge_options`: map of zero or more attributes.
     - `:redirect_url`: URL to redirect your customer when the transaction is complete.
     - `:default_channel`: channel that shows up when client modal is instantiated. E.g `"bank_transfer"`
     - `:channels`: Allowed payment channels for this transaction e.g `["card", "bank_transfer"]`
@@ -215,15 +216,16 @@ defmodule KoraPay do
           String.t(),
           String.t(),
           customer(),
+          String.t(),
           charge_options()
         ) :: charge_response() | error()
-  def create_charge(amount, currency, narration, customer, charge_options \\ %{}) do
+  def create_charge(amount, currency, narration, customer, reference \\ generate_reference(), charge_options \\ %{}) do
     body_params =
       Map.merge(
         %{
           amount: to_string(amount),
           currency: currency,
-          reference: generate_reference(),
+          reference: reference,
           notification_url: Application.get_env(:kora_pay, :webhook_url),
           narration: narration,
           customer: customer
@@ -351,14 +353,15 @@ defmodule KoraPay do
   ```
 
   ## Options
+    - `reference` : transaction reference, if not provided, will be auto generated.
     - `type` : destination type. defaults to `"bank_account"`
   """
   @impl Behaviour
   @spec disburse(non_neg_integer(), String.t(), bank_account(), customer(), String.t()) ::
           disbursement() | error()
-  def disburse(amount, currency, bank_account, customer, type \\ "bank_account") do
+  def disburse(amount, currency, bank_account, customer, reference \\ generate_reference(), type \\ "bank_account") do
     params = %{
-      reference: generate_reference(),
+      reference: reference,
       destination: %{
         type: type,
         amount: to_string(amount),
@@ -495,6 +498,9 @@ defmodule KoraPay do
   ```
   iex(1)> KoraPay.create_virtual_bank_account()
   ```
+  ## Options
+  1. `reference` : transaction reference, if not provided, will be auto generated.
+  ##
   """
   @impl Behaviour
   @spec create_virtual_bank_account(
