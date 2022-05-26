@@ -7,7 +7,8 @@ defmodule KoraPay.SandboxTest do
   @moduletag :sandbox
 
   setup do
-    Mox.stub_with(KoraPayMock, KoraPay)
+    Application.put_env(:kora_pay, :api, KoraPay.Client)
+    :ok
   end
 
   describe "Mock Pay-ins" do
@@ -37,15 +38,21 @@ defmodule KoraPay.SandboxTest do
   describe "Mock Verification" do
   end
 
-  describe "Miscellaneous" do
-    test "GET a list of banks" do
+  # describe "Miscellaneous" do
+  #   test "GET a list of banks" do
+  #     assert {:ok, _banks} = KoraPay.list_banks()
+  #   end
+  # end
+
+  describe "Mock Balances" do
+    test "GET " do
       assert true == true
     end
   end
 
-  describe "Mock Balances" do
-  end
-
   describe "Mock Virtual Bank Accout" do
+    test "GET " do
+      assert true == true
+    end
   end
 end
