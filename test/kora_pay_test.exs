@@ -4,19 +4,20 @@ defmodule KoraPayTest do
 
   setup do
     verify!(KoraPayMock)
+    :ok
   end
 
   describe "Mock Pay-ins" do
     test "can initialize a charge on a card" do
-      expect(KoraPayMock, :create_charge, fn ->
+      expect(KoraPayMock, :create_charge, fn args ->
         {:ok,
          %{
            "checkout_url" => "https://test-checkout.korapay.com/test-txn/pay",
-           "reference" => "test-txn"
+           "reference" => "x"
          }}
       end)
 
-      assert {:ok, _} = KoraPay.create_charge(1000, "NGN", "test-xyz", %{email: "jycdmbhw@sharklasers.com"}, "test-txn")
+      assert {:ok, _} = KoraPay.create_charge(1000, "NGN", "test-xyz", %{email: "jycdmbhw@sharklasers.com"}, "test-ref")
     end
   end
 

@@ -218,7 +218,7 @@ defmodule KoraPay do
           charge_options()
         ) :: charge_response() | error()
   def create_charge(amount, currency, narration, customer, reference \\ generate_reference(), charge_options \\ %{}) do
-    body_params =
+    params =
       Map.merge(
         %{
           amount: to_string(amount),
@@ -231,7 +231,7 @@ defmodule KoraPay do
         charge_options
       )
 
-    impl().initialize_charge(body_params)
+    impl().create_charge(params)
   end
 
   @doc """
