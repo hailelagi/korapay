@@ -25,8 +25,12 @@ defmodule KoraPay.Client do
     end
     ```
   """
+  alias KoraPay.Behaviour
+  @behaviour Behaviour
+
   @version "v1"
   @namespace "merchant/api"
+
 
   @spec build_client(:public | :private) :: Tesla.Client.t()
   def build_client(auth_type) do
@@ -39,73 +43,84 @@ defmodule KoraPay.Client do
     Tesla.client(middleware)
   end
 
-  def initialize_charge(opts) do
-      build_client(:private)
-      |> Tesla.post("/charges/initialize", opts)
-      |> parse_response()
+  @impl Behaviour
+  def create_charge(opts) do
+    build_client(:private)
+    |> Tesla.post("/charges/initialize", opts)
+    |> parse_response()
   end
 
+  @impl Behaviour
   def query_charge(ref) do
     build_client(:private)
     |> Tesla.get("/charges/#{ref}")
     |> parse_response()
   end
 
+  @impl Behaviour
   def charge_card(opts) do
     build_client(:private)
     |> Tesla.post("/charges/card", opts)
     |> parse_response()
   end
 
-  @spec authorize_charge(any) :: {:error, %{details: any, reason: any}} | {:ok, any}
+  @impl Behaviour
   def authorize_charge(opts) do
     build_client(:private)
     |> Tesla.post("/charges/card/authorize", opts)
     |> parse_response()
   end
 
+  @impl Behaviour
   def disburse_to_account(opts) do
     build_client(:private)
     |> Tesla.post("/transactions/disburse", opts)
     |> parse_response()
   end
 
+  @impl Behaviour
   def verify_disbursed_txn(txn_ref) do
     build_client(:private)
     |> Tesla.get("/transactions/#{txn_ref}")
     |> parse_response()
   end
 
+  @impl Behaviour
   def all_transactions do
     build_client(:private)
     |> Tesla.get("/transactions")
     |> parse_response()
   end
 
+  @impl Behaviour
   def resolve_bank_account(opts) do
     build_client(:public)
     |> Tesla.post("/misc/banks/resolve", opts)
     |> parse_response()
   end
 
+  @impl Behaviour
   def list_banks do
     build_client(:public)
     |> Tesla.get("/misc/banks")
     |> parse_response()
   end
 
+  @impl Behaviour
   def get_balances do
     build_client(:private)
     |> Tesla.get("/balances")
     |> parse_response()
   end
 
+  @impl Behaviour
   def create_virtual_bank_account(opts) do
     build_client(:private)
     |> Tesla.post("/virtual-bank-account", opts)
     |> parse_response()
   end
 
+  @impl Behaviour
   def virtual_bank_account_details(ref) do
     build_client(:private)
     |> Tesla.get("/virtual-bank-account/#{ref}")
@@ -114,7 +129,9 @@ defmodule KoraPay.Client do
 
   defp parse_response(request) do
     case request do
-      {:ok, %{status: 200, body: %{"status" => true} = body}} -> {:ok, body["data"]}
+      {:ok, %{status: 200, body: %{"status" => true} = body}} ->
+        {:ok, body["data"]}
+
       response ->
         parse_error(response)
     end

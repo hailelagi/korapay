@@ -1,14 +1,16 @@
 defmodule KoraPay.Behaviour do
   @moduledoc false
 
-  @callback create_charge(
-              amount :: non_neg_integer(),
-              currency :: String.t(),
-              narration :: String.t(),
-              customer :: KoraPay.customer(),
-              reference :: String.t(),
-              options :: KoraPay.charge_options()
-            ) :: KoraPay.charge_response() | KoraPay.error()
+  @callback create_charge(%{
+              required(:amount) => non_neg_integer(),
+              required(:currency) => String.t(),
+              required(:narration) => String.t(),
+              required(:customer) => KoraPay.customer(),
+              required(:reference) => String.t(),
+              optional(:redirect_url) => String.t(),
+              optional(:channels) => [KoraPay.channel()],
+              optional(:default_channel) => KoraPay.channel()
+            }) :: KoraPay.charge_response() | KoraPay.error()
 
   @callback charge_status(reference :: String.t()) :: KoraPay.charge_status() | KoraPay.error()
 

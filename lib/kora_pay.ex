@@ -27,8 +27,6 @@ defmodule KoraPay do
     end
   ```
   """
-  alias KoraPay.Behaviour, as: Behaviour
-  @behaviour Behaviour
 
   ### Entities ###
   @type card :: %{
@@ -210,7 +208,7 @@ defmodule KoraPay do
     - `:default_channel`: channel that shows up when client modal is instantiated. E.g `"bank_transfer"`
     - `:channels`: Allowed payment channels for this transaction e.g `["card", "bank_transfer"]`
   """
-  @impl Behaviour
+
   @spec create_charge(
           non_neg_integer(),
           String.t(),
@@ -253,7 +251,6 @@ defmodule KoraPay do
     }
   ```
   """
-  @impl Behaviour
   @spec charge_status(String.t()) :: charge_status() | error()
   def charge_status(reference), do: impl().query_charge(reference)
 
@@ -277,7 +274,6 @@ defmodule KoraPay do
       - address
       - zip_codes
   """
-  @impl Behaviour
   @spec authorize_charge(String.t(), auth_model(), auth_options()) ::
           charge_response() | error()
   def authorize_charge(txn_reference, auth_model, options) do
@@ -325,7 +321,6 @@ defmodule KoraPay do
   }
   ```
   """
-  @impl Behaviour
   @spec charge_card(String.t()) :: charge_response() | error()
   def charge_card(charge_data), do: impl().charge_card(charge_data)
 
@@ -356,7 +351,6 @@ defmodule KoraPay do
     - `reference` : transaction reference, if not provided, will be auto generated.
     - `type` : destination type. defaults to `"bank_account"`
   """
-  @impl Behaviour
   @spec disburse(non_neg_integer(), String.t(), bank_account(), customer(), String.t()) ::
           disbursement() | error()
   def disburse(amount, currency, bank_account, customer, reference \\ generate_reference(), type \\ "bank_account") do
@@ -400,7 +394,6 @@ defmodule KoraPay do
 
   ```
   """
-  @impl Behaviour
   @spec verify_disbursement(String.t()) :: disbursement_status() | error()
   def verify_disbursement(reference), do: impl().verify_disbursed_txn(reference)
 
@@ -430,7 +423,6 @@ defmodule KoraPay do
       }, ...]}
   ```
   """
-  @impl Behaviour
   @spec transactions() :: [transaction()] | error()
   def transactions, do: impl().all_transactions()
 
@@ -448,7 +440,6 @@ defmodule KoraPay do
   }}
   ```
   """
-  @impl Behaviour
   @spec resolve_bank_account(String.t(), String.t()) :: bank_account() | error()
   def resolve_bank_account(bank_code, account_number) do
     body_params = %{
@@ -474,7 +465,6 @@ defmodule KoraPay do
     }, ...]}
     ```
   """
-  @impl Behaviour
   @spec list_banks() :: [misc_bank_account()] | error()
   def list_banks, do: impl().list_banks()
 
@@ -487,7 +477,6 @@ defmodule KoraPay do
   {:ok, %{"NGN" => %{"available_balance" => 946, "pending_balance" => 0}}}
   ```
   """
-  @impl Behaviour
   @spec balances :: balance() | error()
   def balances, do: impl().get_balances()
 
@@ -502,7 +491,6 @@ defmodule KoraPay do
   1. `reference` : transaction reference, if not provided, will be auto generated.
   ##
   """
-  @impl Behaviour
   @spec create_virtual_bank_account(
           String.t(),
           boolean(),
@@ -532,7 +520,6 @@ defmodule KoraPay do
     impl().create_virtual_bank_account(params)
   end
 
-  @impl Behaviour
   @spec virtual_bank_account_details(String.t()) :: virtual_account() | error()
   def virtual_bank_account_details(ref), do: impl().virtual_bank_account_details(ref)
 
