@@ -11,48 +11,80 @@ defmodule KoraPay.SandboxTest do
     :ok
   end
 
-  describe "Mock Pay-ins" do
-    test "can initialize a payment charge" do
-      true == true
+  describe "Pay-ins" do
+    test "POST to create a payment link" do
+      assert {:ok, _} =
+               KoraPay.create_charge(
+                 1000,
+                 "NGN",
+                 "test-xyz",
+                 %{email: "jycdmbhw@sharklasers.com"},
+                 "test-txn-init"
+               )
     end
 
-    test "can query the status of a card chage" do
-      true == true
+    test "GET the status of a card charge" do
+      assert {:ok, _} = KoraPay.charge_status("test_fsjlfkl")
     end
 
-    test "can authorize a charge on a card" do
-      true == true
+    test "POST to authorize a charge on a card" do
+      assert {:ok, _} = KoraPay.authorize_charge("test-txn", :otp, "12345")
     end
 
-    test "can charge a card" do
-      true == true
-    end
-  end
+    test "POST to charge a card" do
+      charge_data = Base.encode64("test-charge")
 
-  describe "Mock Payouts" do
-  end
-
-  describe "Mock Transactions" do
-  end
-
-  describe "Mock Verification" do
-  end
-
-  # describe "Miscellaneous" do
-  #   test "GET a list of banks" do
-  #     assert {:ok, _banks} = KoraPay.list_banks()
-  #   end
-  # end
-
-  describe "Mock Balances" do
-    test "GET " do
-      assert true == true
+      assert {:ok, _} = KoraPay.charge_card(charge_data)
     end
   end
 
-  describe "Mock Virtual Bank Accout" do
-    test "GET " do
-      assert true == true
+  describe "Payouts" do
+    test "POST a disbursement to bank account" do
+      bank_account = %{"bank" => "033", "account" => "0000000000"}
+      customer = %{"name" => "John Doe", "email" => "johndoe@korapay.com"}
+
+      assert {:ok, _} = KoraPay.disburse(1000, "NGN", bank_account, customer)
+    end
+
+    test "GET verification on a disbursement" do
+      assert {:ok, _} = KoraPay.verify_disbursement("KPY_jLo7Zbk")
+    end
+  end
+
+  describe "Transactions" do
+    test "GET all transactions" do
+      assert {:ok, _} = KoraPay.transactions()
+    end
+  end
+
+  describe "Verification" do
+    test "POST to resolve a bank account" do
+      assert {:ok, _} = KoraPay.resolve_bank_account("058", "0234247896")
+    end
+  end
+
+  describe "Miscellaneous " do
+    test "GET a list of banks" do
+      assert {:ok, _} = KoraPay.list_banks()
+    end
+  end
+
+  describe "Balances" do
+    test "GET balances" do
+      assert {:ok, _} = KoraPay.balances()
+    end
+  end
+
+  describe "Virtual Bank Account" do
+    test "POST to create a virtual bank account" do
+      assert {:ok, _} =
+               KoraPay.create_virtual_bank_account("Steph James", true, ["12345678901"], "035", %{
+                 "name" => "Don Alpha"
+               })
+    end
+
+    test "GET a virtual bank account's details" do
+      assert {:ok, res} = KoraPay.virtual_bank_account_details("xyz123abc456")
     end
   end
 end
