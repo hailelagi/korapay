@@ -217,7 +217,14 @@ defmodule KoraPay do
           String.t(),
           charge_options()
         ) :: charge_response() | error()
-  def create_charge(amount, currency, narration, customer, reference \\ generate_reference(), charge_options \\ %{}) do
+  def create_charge(
+        amount,
+        currency,
+        narration,
+        customer,
+        reference \\ generate_reference(),
+        charge_options \\ %{}
+      ) do
     params =
       Map.merge(
         %{
@@ -252,7 +259,7 @@ defmodule KoraPay do
   ```
   """
   @spec charge_status(String.t()) :: charge_status() | error()
-  def charge_status(reference), do: impl().query_charge(reference)
+  def charge_status(reference), do: impl().charge_status(reference)
 
   @doc """
   Authorize a [charge](./KoraPay.html#charge_card/1) that is `:processing`.
@@ -284,12 +291,12 @@ defmodule KoraPay do
         :pin -> %{pin: options}
       end
 
-    body = %{
+    params = %{
       transaction_reference: txn_reference,
       authorization: auth
     }
 
-    impl().authorize_charge(body)
+    impl().authorize_charge(params)
   end
 
   @doc """
@@ -339,7 +346,7 @@ defmodule KoraPay do
     "status" => "processing",
     "reference" => "KPY-D-t74azVrw9oPLtv9",
     "narration" => "Test Transfer Payment",
-    "customer" => {
+    "customer" => %{
       "name" => "John Doe",
       "email" => "johndoe@korapay.com"
       }
@@ -353,7 +360,14 @@ defmodule KoraPay do
   """
   @spec disburse(non_neg_integer(), String.t(), bank_account(), customer(), String.t()) ::
           disbursement() | error()
-  def disburse(amount, currency, bank_account, customer, reference \\ generate_reference(), type \\ "bank_account") do
+  def disburse(
+        amount,
+        currency,
+        bank_account,
+        customer,
+        reference \\ generate_reference(),
+        type \\ "bank_account"
+      ) do
     params = %{
       reference: reference,
       destination: %{
@@ -365,7 +379,7 @@ defmodule KoraPay do
       }
     }
 
-    impl().disburse_to_account(params)
+    impl().disburse(params)
   end
 
   @doc """
@@ -385,7 +399,7 @@ defmodule KoraPay do
         "callback_url" => "https://example.com",
         "trace_id" => "000000000000000111111111111111",
         "message" => "Payout successful",
-        "customer" => {
+        "customer" => %{
         "name" => "John Doe",
         "email" => "johndoe@korapay.com",
       }
@@ -395,7 +409,7 @@ defmodule KoraPay do
   ```
   """
   @spec verify_disbursement(String.t()) :: disbursement_status() | error()
-  def verify_disbursement(reference), do: impl().verify_disbursed_txn(reference)
+  def verify_disbursement(reference), do: impl().verify_disbursement(reference)
 
   @doc """
   All transactions for a client.
@@ -404,7 +418,7 @@ defmodule KoraPay do
   ```
   iex(1)> KoraPay.transactions()
   {:ok,  [
-      {
+      %{
         "type" => "collection",
         "amount" => 1000,
         "fee" => 10,
@@ -416,7 +430,7 @@ defmodule KoraPay do
         "reference" => "KPY-D-jLo7Zbk",
         "callback_url" => "https://example.com",
         "meta" => "{'product_name':'Becoming by Michelle Obama','product_description':''}",
-        "customer" => {
+        "customer" => %{
           "name" => "Timi Adesoji",
           "email" => "johndoe@korapay.com",
         }
@@ -424,7 +438,7 @@ defmodule KoraPay do
   ```
   """
   @spec transactions() :: [transaction()] | error()
-  def transactions, do: impl().all_transactions()
+  def transactions, do: impl().transactions()
 
   @doc """
   Verify a bank account.
@@ -442,12 +456,12 @@ defmodule KoraPay do
   """
   @spec resolve_bank_account(String.t(), String.t()) :: bank_account() | error()
   def resolve_bank_account(bank_code, account_number) do
-    body_params = %{
+    params = %{
       bank: bank_code,
       account: account_number
     }
 
-    impl().resolve_bank_account(body_params)
+    impl().resolve_bank_account(params)
   end
 
   @doc """
@@ -478,14 +492,14 @@ defmodule KoraPay do
   ```
   """
   @spec balances :: balance() | error()
-  def balances, do: impl().get_balances()
+  def balances, do: impl().balances()
 
   @doc """
   Create a virutal bank account.
 
   ## Examples
   ```
-  iex(1)> KoraPay.create_virtual_bank_account()
+  iex(1)> KoraPay.create_virtual_bank_account("Steph James", true, ["12345678901"], "035", %{ "name" => "Don Alpha"})
   ```
   ## Options
   1. `reference` : transaction reference, if not provided, will be auto generated.

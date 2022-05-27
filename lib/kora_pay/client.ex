@@ -51,7 +51,7 @@ defmodule KoraPay.Client do
   end
 
   @impl Behaviour
-  def query_charge(ref) do
+  def charge_status(ref) do
     build_client(:private)
     |> Tesla.get("/charges/#{ref}")
     |> parse_response()
@@ -72,21 +72,21 @@ defmodule KoraPay.Client do
   end
 
   @impl Behaviour
-  def disburse_to_account(opts) do
+  def disburse(opts) do
     build_client(:private)
     |> Tesla.post("/transactions/disburse", opts)
     |> parse_response()
   end
 
   @impl Behaviour
-  def verify_disbursed_txn(txn_ref) do
+  def verify_disbursement(txn_ref) do
     build_client(:private)
     |> Tesla.get("/transactions/#{txn_ref}")
     |> parse_response()
   end
 
   @impl Behaviour
-  def all_transactions do
+  def transactions do
     build_client(:private)
     |> Tesla.get("/transactions")
     |> parse_response()
@@ -107,7 +107,7 @@ defmodule KoraPay.Client do
   end
 
   @impl Behaviour
-  def get_balances do
+  def balances do
     build_client(:private)
     |> Tesla.get("/balances")
     |> parse_response()
