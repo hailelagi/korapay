@@ -4,6 +4,7 @@ defmodule KoraPayTest do
 
   setup do
     verify!(KoraPayMock)
+    Application.put_env(:kora_pay, :api, KoraPayMock)
     :ok
   end
 

@@ -11,44 +11,44 @@ defmodule KoraPay.SandboxTest do
     :ok
   end
 
-  describe "Pay-ins" do
-    test "POST to create a payment link" do
-      assert {:ok, _} =
-               KoraPay.create_charge(
-                 1000,
-                 "NGN",
-                 "test-xyz",
-                 %{email: "jycdmbhw@sharklasers.com"},
-                 "test-txn-init"
-               )
-    end
+  # describe "Pay-ins" do
+  #   test "POST to create a payment link" do
+  #     assert {:ok, _} =
+  #              KoraPay.create_charge(
+  #                1000,
+  #                "NGN",
+  #                "test-xyz",
+  #                %{email: "jycdmbhw@sharklasers.com"},
+  #                "test-txn-init"
+  #              )
+  #   end
 
-    test "GET the status of a card charge" do
-      assert {:ok, _} = KoraPay.charge_status("test_fsjlfkl")
-    end
+  #   test "GET the status of a card charge" do
+  #     assert {:ok, _} = KoraPay.charge_status("test-xyz")
+  #   end
 
-    test "POST to authorize a charge on a card" do
-      assert {:ok, _} = KoraPay.authorize_charge("test-txn", :otp, "12345")
-    end
+  #   test "POST to authorize a charge on a card" do
+  #     assert {:ok, _} = KoraPay.authorize_charge("test-txn", :otp, "12345")
+  #   end
 
-    test "POST to charge a card" do
-      charge_data = Base.encode64("test-charge")
+  #   test "POST to charge a card" do
+  #     charge_data = Base.encode64("test-charge")
 
-      assert {:ok, _} = KoraPay.charge_card(charge_data)
-    end
-  end
+  #     assert {:ok, _} = KoraPay.charge_card(charge_data)
+  #   end
+  # end
 
   describe "Payouts" do
-    test "POST a disbursement to bank account" do
-      bank_account = %{"bank" => "033", "account" => "0000000000"}
-      customer = %{"name" => "John Doe", "email" => "johndoe@korapay.com"}
+    # test "POST a disbursement to bank account" do
+    #   bank_account = %{"bank" => "033", "account" => "0000000000"}
+    #   customer = %{"name" => "John Doe", "email" => "johndoe@korapay.com"}
 
-      assert {:ok, _} = KoraPay.disburse(1000, "NGN", bank_account, customer)
-    end
+    #   assert {:ok, _} = KoraPay.disburse(1000, "NGN", bank_account, customer)
+    # end
 
-    test "GET verification on a disbursement" do
-      assert {:ok, _} = KoraPay.verify_disbursement("KPY_jLo7Zbk")
-    end
+    # test "GET verification on a disbursement" do
+    #   assert {:ok, _} = KoraPay.verify_disbursement("KPY_jLo7Zbk")
+    # end
   end
 
   describe "Transactions" do
@@ -84,7 +84,17 @@ defmodule KoraPay.SandboxTest do
     end
 
     test "GET a virtual bank account's details" do
-      assert {:ok, res} = KoraPay.virtual_bank_account_details("xyz123abc456")
+      assert {:ok, account} =
+               KoraPay.create_virtual_bank_account("Steph James", true, ["12345678901"], "035", %{
+                 "name" => "Don Alpha"
+               })
+
+      assert {:ok, _res} = KoraPay.virtual_bank_account_details(account["account_reference"])
+    end
+
+    test "does not GET an invalid account's details" do
+      assert {:error, %{details: "Virtual bank account not found"}} =
+               KoraPay.virtual_bank_account_details("xyz123abc456")
     end
   end
 end
