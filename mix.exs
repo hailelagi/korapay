@@ -9,7 +9,7 @@ defmodule KoraPay.MixProject do
     [
       app: :kora_pay,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.0",
       name: "korapay",
       source_url: @source_url,
       homepage_url: @source_url,
