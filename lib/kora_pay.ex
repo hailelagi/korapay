@@ -18,10 +18,10 @@ defmodule KoraPay do
   ## Usage
   ```
     defmodule MyApp do
-      def do_stuff do
+      def all_banks do
         case KoraPay.list_banks() do
-          {:ok, banks} <- IO.inspect(banks)
-          {:error, error} <- IO.inspect(error)
+          {:ok, banks} -> IO.inspect(banks)
+          {:error, error} -> IO.inspect(error)
         end
       end
     end
@@ -37,18 +37,28 @@ defmodule KoraPay do
         }
 
   @type transaction :: %{
+          reference: String.t(),
+          status: status(),
           type: transaction_type(),
           amount: float(),
           fee: float(),
           narration: String.t(),
           currency: String.t(),
           created_at: DateTime.t(),
-          status: status(),
           transaction_status: String.t(),
-          reference: String.t(),
           callback_url: String.t(),
           meta: %{},
           customer: customer()
+        }
+
+  @type virtual_bank_account_txn :: %{
+          reference: String.t(),
+          status: status(),
+          amount: String.t(),
+          fee: String.t(),
+          currency: String.t(),
+          description: String.t(),
+          payer_bank_account: payer_bank_account()
         }
 
   @type customer :: %{
@@ -166,6 +176,19 @@ defmodule KoraPay do
           created_at: DateTime.t(),
           payer_bank_account: payer_bank_account(),
           card: card()
+        }
+
+  @type virtual_bank_account_txn_response :: %{
+          total_amount_received: 1000,
+          account_number: String.t(),
+          currency: String.t(),
+          transactions: [virtual_bank_account_txn()],
+          pagination: %{
+            page: integer(),
+            total: integer(),
+            pageCount: integer(),
+            totalPages: integer()
+          }
         }
 
   ### Helper Types
@@ -536,6 +559,12 @@ defmodule KoraPay do
 
   @spec virtual_bank_account_details(String.t()) :: virtual_account() | error()
   def virtual_bank_account_details(ref), do: impl().virtual_bank_account_details(ref)
+
+  @spec virtual_bank_account_transactions(account_number :: String.t()) ::
+          [virtual_bank_account_txn_response()] | error()
+  def virtual_bank_account_transactions(account_number) do
+    impl().virtual_bank_account_transactions(%{account_number: account_number})
+  end
 
   defp generate_reference, do: UUID.uuid4(:slug)
 

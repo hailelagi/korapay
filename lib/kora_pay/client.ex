@@ -127,6 +127,14 @@ defmodule KoraPay.Client do
     |> parse_response()
   end
 
+  @impl Behaviour
+
+  def virtual_bank_account_transactions(opts) do
+    build_client(:private)
+    |> Tesla.get("/virtual-bank-account/transactions", body: opts)
+    |> parse_response()
+  end
+
   defp parse_response(request) do
     case request do
       {:ok, %{status: 200, body: %{"status" => true} = body}} ->

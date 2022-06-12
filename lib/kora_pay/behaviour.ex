@@ -58,4 +58,7 @@ defmodule KoraPay.Behaviour do
 
   @callback virtual_bank_account_details(account_reference :: String.t()) ::
               KoraPay.virtual_account() | KoraPay.error()
+
+  @callback virtual_bank_account_transactions(%{account_number: String.t()}) ::
+              [KoraPay.virtual_bank_account_txn_response()] | KoraPay.error()
 end
