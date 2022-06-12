@@ -179,7 +179,7 @@ defmodule KoraPay do
         }
 
   @type virtual_bank_account_txn_response :: %{
-          total_amount_received: 1000,
+          total_amount_received: non_neg_integer(),
           account_number: String.t(),
           currency: String.t(),
           transactions: [virtual_bank_account_txn()],
