@@ -12,20 +12,10 @@ defmodule KoraPay.Client do
       iex(1)> KoraPay.Client.get_balances()
       iex(2)> {:ok, %{"NGN" => %{"available_balance" => 0, "pending_balance" => 0}}}
     ```
-
-    Do not consume the client directly, use the [public interface](./KoraPay.html) in your application:
-    ```
-    defmodule MyApp do
-      def print_balance do
-        case KoraPay.balances() do
-          {:ok, balance} <- IO.inspect(balance)
-          {:error, error} <- IO.inspect(error)
-        end
-      end
-    end
-    ```
   """
   alias KoraPay.Behaviour
+  alias KoraPay.ParseError
+
   @behaviour Behaviour
 
   @version "v1"
@@ -140,33 +130,7 @@ defmodule KoraPay.Client do
       {:ok, %{status: 200, body: %{"status" => true} = body}} ->
         {:ok, body["data"]}
 
-      response ->
-        parse_error(response)
-    end
-  end
-
-  defp parse_error(response) do
-    case response do
-      {:ok, %{status: 400, body: body}} ->
-        {:error, %{reason: body["error"], details: body["message"]}}
-
-      {:ok, %{status: 401, body: body}} ->
-        {:error, %{reason: body["error"], details: body["message"]}}
-
-      {:ok, %{status: 404, body: body}} ->
-        {:error, %{reason: body["error"], details: body["message"]}}
-
-      {:ok, %{status: 403, body: body}} ->
-        {:error, %{reason: body["error"], details: body["message"]}}
-
-      {:ok, %{status: 500, body: body}} ->
-        {:error, %{reason: "Internal server error", details: body["message"]}}
-
-      {:ok, %{status: status, body: body}} ->
-        {:error, %{reason: "unexpected error - #{status}", details: body["message"]}}
-
-      _ ->
-        {:error, %{reason: "unexpected error", details: "unknown"}}
+      response -> ParseError.call(response)
     end
   end
 end
