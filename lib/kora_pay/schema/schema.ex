@@ -1,4 +1,8 @@
 defmodule KoraPay.Schema do
+  @moduledoc false
+
+  alias KoraPay.Schema.Card
+  alias KoraPay.Schema.Customer
 
   @type virtual_bank_account_txn :: %{
           reference: String.t(),
@@ -16,7 +20,7 @@ defmodule KoraPay.Schema do
           currency: String.t(),
           narration: String.t(),
           bank_account: short_bank_account(),
-          customer: customer()
+          customer: Customer.t()
         }
 
   @type disbursement :: %{
@@ -26,7 +30,7 @@ defmodule KoraPay.Schema do
           status: status(),
           reference: String.t(),
           narration: String.t(),
-          customer: customer()
+          customer: Customer.t()
         }
 
   @type charge_reference :: %{reference: String.t(), checkout_url: String.t()}
@@ -61,7 +65,7 @@ defmodule KoraPay.Schema do
           created_at: DateTime.t(),
           currency: String.t(),
           bank_account: bank_account(),
-          customer: customer()
+          customer: Customer.t()
         }
 
   @type payer_bank_account :: %{
@@ -96,11 +100,11 @@ defmodule KoraPay.Schema do
           status: status(),
           transaction_reference: String.t(),
           authorization: %{},
-          card: card()
+          card: Card.t()
         }
 
   @type disbursement_status :: %{
-          type: transaction_type(),
+          type: KoraPay.transaction_type(),
           transaction_status: String.t(),
           transaction_date: DateTime.t(),
           channel: channel(),
@@ -116,7 +120,7 @@ defmodule KoraPay.Schema do
           description: String.t(),
           created_at: DateTime.t(),
           payer_bank_account: payer_bank_account(),
-          card: card()
+          card: Card.t()
         }
 
   @type virtual_bank_account_txn_response :: %{

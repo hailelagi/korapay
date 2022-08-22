@@ -28,11 +28,15 @@ defmodule KoraPay do
   ```
   """
 
+  alias KoraPay.Card
+  alias KoraPay.Customer
+  alias KoraPay.Schema
+
   ### Helper Types
   @type charge_options :: %{
           optional(:redirect_url) => String.t(),
-          optional(:channels) => [channel()],
-          optional(:default_channel) => channel()
+          optional(:channels) => [Schema.channel()],
+          optional(:default_channel) => Schema.channel()
         }
 
   @type auth_options ::
@@ -73,10 +77,10 @@ defmodule KoraPay do
           non_neg_integer(),
           String.t(),
           String.t(),
-          customer(),
+          Customer.t(),
           String.t(),
           charge_options()
-        ) :: charge_response() | error()
+        ) :: Schema.charge_response() | error()
   def create_charge(
         amount,
         currency,
@@ -118,7 +122,7 @@ defmodule KoraPay do
     }
   ```
   """
-  @spec charge_status(String.t()) :: charge_status() | error()
+  @spec charge_status(String.t()) :: Schema.charge_status() | error()
   def charge_status(reference), do: impl().charge_status(reference)
 
   @doc """
@@ -141,8 +145,8 @@ defmodule KoraPay do
       - address
       - zip_codes
   """
-  @spec authorize_charge(String.t(), auth_model(), auth_options()) ::
-          charge_response() | error()
+  @spec authorize_charge(String.t(), Schema.auth_model(), Schema.auth_options()) ::
+          Schema.charge_response() | error()
   def authorize_charge(txn_reference, auth_model, options) do
     auth =
       case auth_model do
@@ -188,7 +192,7 @@ defmodule KoraPay do
   }
   ```
   """
-  @spec charge_card(String.t()) :: charge_response() | error()
+  @spec charge_card(String.t()) :: Schema.charge_response() | error()
   def charge_card(charge_data), do: impl().charge_card(charge_data)
 
   @doc """
@@ -218,7 +222,7 @@ defmodule KoraPay do
     - `reference` : transaction reference, if not provided, will be auto generated.
     - `type` : destination type. defaults to `"bank_account"`
   """
-  @spec disburse(non_neg_integer(), String.t(), bank_account(), customer(), String.t()) ::
+  @spec disburse(non_neg_integer(), String.t(), bank_account(), Customer.t(), String.t()) ::
           disbursement() | error()
   def disburse(
         amount,
